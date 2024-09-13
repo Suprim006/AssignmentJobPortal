@@ -5,11 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-var folder = Environment.SpecialFolder.LocalApplicationData;
-Console.WriteLine("File path: ");
-Console.WriteLine(Environment.GetFolderPath(folder));
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

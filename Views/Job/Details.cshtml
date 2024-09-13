@@ -1,6 +1,9 @@
 ﻿@model AssignmentJobPortal.Models.JobViewModel
+@using AssignmentJobPortal.Entities
+@using System.Security.Claims
 @{
     ViewData["Title"] = "Job Details";
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 }
 <!-- job post company Start -->
 <div class="job-post-company pt-120 pb-120">
@@ -36,7 +39,7 @@
             </div>
             <!-- Right Content -->
             <div class="col-xl-4 col-lg-4">
-                <div class="post-details3  mb-50">
+                <div class="post-details3 mb-50">
                     <!-- Small Section Tittle -->
                     <div class="small-section-tittle">
                         <h4>Job Overview</h4>
@@ -48,10 +51,10 @@
                         <li>Application date : <span>@Model.ClosingDate.ToString("dd MMM yyyy")</span></li>
                     </ul>
                     <div class="apply-btn2">
-                        <a href="#" class="btn">Apply Now</a>
+                        <a href="@Url.Action("Create", "JobApplication", new { jobId = Model.Id, userId = userId})" class="btn">Apply Now</a>
                     </div>
                 </div>
-                <div class="post-details4  mb-50">
+                <div class="post-details4 mb-50">
                     <!-- Small Section Tittle -->
                     <div class="small-section-tittle">
                         <h4>Company Information</h4>
