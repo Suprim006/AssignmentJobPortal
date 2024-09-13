@@ -1,15 +1,35 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AssignmentJobPortal.Entities;
+using AssignmentJobPortal.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace AssignmentJobPortal.Controllers
 {
+    [Authorize]
     public class JobApplicationController : Controller
     {
         AppDbContext _dbContext = new AppDbContext();
-        // GET: JobApplicationController
+        // GET: JobApplication
         public ActionResult Index()
         {
-            return View();
+            var jobApplications = _dbContext.JobApplications
+                .Include(ja => ja.User)
+                .Include(ja => ja.Job)
+                .Select(ja => new JobApplicationViewModel()
+                {
+                    Id = ja.Id,
+                    ApplicationDate = ja.ApplicationDate,
+                    UserName = ja.User.FirstName + " " + ja.User.LastName,
+                    JobTitle = ja.Job.Title,
+                    CoverLetter = ja.CoverLetter
+                })
+                .ToList();
+
+            return View(jobApplications);
         }
 
         // GET: JobApplicationController/Details/5
@@ -18,67 +38,178 @@ namespace AssignmentJobPortal.Controllers
             return View();
         }
 
-        // GET: JobApplicationController/Create
-        public ActionResult Create()
+        // GET: JobApplication/Create
+        public IActionResult Create(int jobId, int userId)
         {
-            return View();
+            // Assuming you have DbContext set up to access your Job and User tables
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            var job = _dbContext.Jobs.FirstOrDefault(j => j.Id == jobId);
+
+            if (user == null || job == null)
+            {
+                return NotFound();
+            }
+
+            var model = new JobApplicationViewModel
+            {
+                JobId = jobId,
+                UserId = userId,
+                ApplicationDate = DateTime.Now,
+                UserName = $"{user.FirstName} {user.LastName}", // New property for full name
+                JobTitle = job.Title // New property for job title
+            };
+
+            return View(model);
         }
 
-        // POST: JobApplicationController/Create
+
+
+
+        // POST: JobApplication/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(JobApplicationViewModel viewModel)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var jobApplication = new JobApplications
+                {
+                    ApplicationDate = viewModel.ApplicationDate,
+                    UserId = viewModel.UserId,
+                    JobId = viewModel.JobId,
+                    CoverLetter = viewModel.CoverLetter
+                };
+
+                _dbContext.JobApplications.Add(jobApplication);
+                _dbContext.SaveChanges();
+                return RedirectToAction("Index");
             }
-            catch
-            {
-                return View();
-            }
+            ViewBag.Error = "Unable to create new company";
+            return RedirectToAction("Index");
         }
 
-        // GET: JobApplicationController/Edit/5
+
+        // GET: JobApplication/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+            var jobApplication = _dbContext.JobApplications
+                .Include(ja => ja.User)
+                .Include(ja => ja.Job)
+                .Where(ja => ja.Id == id)
+                .Select(ja => new JobApplicationViewModel
+                {
+                    Id = ja.Id,
+                    ApplicationDate = ja.ApplicationDate,
+                    UserId = ja.UserId,
+                    JobId = ja.JobId,
+                    CoverLetter = ja.CoverLetter
+                })
+                .FirstOrDefault();
+
+            if (jobApplication == null)
+            {
+                return NotFound();
+            }
+
+            // Re-populate drop-down lists
+            ViewBag.Jobs = _dbContext.Jobs.Select(j => new SelectListItem
+            {
+                Value = j.Id.ToString(),
+                Text = j.Title
+            }).ToList();
+
+            ViewBag.Users = _dbContext.Users.Select(u => new SelectListItem
+            {
+                Value = u.Id.ToString(),
+                Text = u.FirstName + " " + u.LastName
+            }).ToList();
+
+            return View(jobApplication);
         }
 
-        // POST: JobApplicationController/Edit/5
+
+        // POST: JobApplication/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, JobApplicationViewModel viewModel)
         {
-            try
+            if (id != viewModel.Id)
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
+
+            if (ModelState.IsValid)
             {
-                return View();
+                var jobApplication = _dbContext.JobApplications.Find(id);
+                if (jobApplication != null)
+                {
+                    jobApplication.ApplicationDate = viewModel.ApplicationDate;
+                    jobApplication.UserId = viewModel.UserId;
+                    jobApplication.JobId = viewModel.JobId;
+                    jobApplication.CoverLetter = viewModel.CoverLetter;
+
+                    _dbContext.JobApplications.Update(jobApplication);
+                    _dbContext.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
+
+            // Re-populate drop-down lists
+            ViewBag.Jobs = _dbContext.Jobs.Select(j => new SelectListItem
+            {
+                Value = j.Id.ToString(),
+                Text = j.Title
+            }).ToList();
+
+            ViewBag.Users = _dbContext.Users.Select(u => new SelectListItem
+            {
+                Value = u.Id.ToString(),
+                Text = u.FirstName + " " + u.LastName
+            }).ToList();
+
+            return View(viewModel);
         }
 
-        // GET: JobApplicationController/Delete/5
+
+        // GET: JobApplication/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            var jobApplication = _dbContext.JobApplications
+                .Include(ja => ja.User)
+                .Include(ja => ja.Job)
+                .Where(ja => ja.Id == id)
+                .Select(ja => new JobApplicationViewModel
+                {
+                    Id = ja.Id,
+                    ApplicationDate = ja.ApplicationDate,
+                    UserName = ja.User.FirstName + " " + ja.User.LastName,
+                    JobTitle = ja.Job.Title,
+                    CoverLetter = ja.CoverLetter
+                })
+                .FirstOrDefault();
+
+            if (jobApplication == null)
+            {
+                return NotFound();
+            }
+
+            return View(jobApplication);
         }
 
-        // POST: JobApplicationController/Delete/5
-        [HttpPost]
+
+        // POST: JobApplication/Delete/5
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult DeleteConfirmed(int id)
         {
-            try
+            var jobApplication = _dbContext.JobApplications.Find(id);
+            if (jobApplication != null)
             {
-                return RedirectToAction(nameof(Index));
+                _dbContext.JobApplications.Remove(jobApplication);
+                _dbContext.SaveChanges();
             }
-            catch
-            {
-                return View();
-            }
+
+            return RedirectToAction("Index");
         }
     }
 }

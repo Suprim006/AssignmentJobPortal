@@ -7,6 +7,7 @@ namespace AssignmentJobPortal.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        AppDbContext _dbContext = new AppDbContext();
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -15,6 +16,11 @@ namespace AssignmentJobPortal.Controllers
 
         public IActionResult Index()
         {
+            var categories = _dbContext.Categories.ToList();
+            var companies = _dbContext.Companies.ToList();
+            ViewBag.Categories = categories;
+            ViewBag.Companies = companies;
+
             return View();
         }
 
@@ -27,6 +33,12 @@ namespace AssignmentJobPortal.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+        public IActionResult AccessDenied()
+        {
+            // Pass an error message to the view or use TempData to show a message
+            TempData["ErrorMessage"] = "You are not authorized to access this page.";
+            return RedirectToAction("Index");
         }
     }
 }

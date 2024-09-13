@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AssignmentJobPortal.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AssignmentJobPortal.Controllers
@@ -6,10 +8,11 @@ namespace AssignmentJobPortal.Controllers
     public class CategoryController : Controller
     {
         AppDbContext _dbContext = new AppDbContext();
-        // GET: CategoryController
+        // GET: Category
         public ActionResult Index()
         {
-            return View();
+            var categories = _dbContext.Categories.ToList();
+            return View(categories);
         }
 
         // GET: CategoryController/Details/5
@@ -18,67 +21,95 @@ namespace AssignmentJobPortal.Controllers
             return View();
         }
 
-        // GET: CategoryController/Create
+        // GET: Category/Create
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: CategoryController/Create
+        // POST: Category/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
+        public ActionResult Create(Categories category)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                _dbContext.Categories.Add(category);
+                _dbContext.SaveChanges();
+                return RedirectToAction("Index");
             }
-            catch
-            {
-                return View();
-            }
+
+            return View(category);
         }
 
-        // GET: CategoryController/Edit/5
+
+        // GET: Category/Edit/5
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
         public ActionResult Edit(int id)
         {
-            return View();
+            var category = _dbContext.Categories.Find(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            return View(category);
         }
 
-        // POST: CategoryController/Edit/5
+
+        // POST: Category/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
+        public ActionResult Edit(int id, Categories category)
         {
-            try
+            if (id != category.Id)
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
+
+            if (ModelState.IsValid)
             {
-                return View();
+                _dbContext.Categories.Update(category);
+                _dbContext.SaveChanges();
+                return RedirectToAction("Index");
             }
+
+            return View(category);
         }
 
-        // GET: CategoryController/Delete/5
+
+        // GET: Category/Delete/5
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
         public ActionResult Delete(int id)
         {
-            return View();
+            var category = _dbContext.Categories.Find(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            return View(category);
         }
 
-        // POST: CategoryController/Delete/5
-        [HttpPost]
+
+        // POST: Category/Delete/5
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
+        public ActionResult DeleteConfirmed(int id)
         {
-            try
+            var category = _dbContext.Categories.Find(id);
+            if (category != null)
             {
-                return RedirectToAction(nameof(Index));
+                _dbContext.Categories.Remove(category);
+                _dbContext.SaveChanges();
             }
-            catch
-            {
-                return View();
-            }
+
+            return RedirectToAction("Index");
         }
+
     }
 }

@@ -1,0 +1,60 @@
+﻿@model IEnumerable<AssignmentJobPortal.Entities.Companies>
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@{
+    ViewData["Title"] = "Companies";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Companies</h1>
+        @if ((await AuthorizationService.AuthorizeAsync(User, "RequireAdminOrManagerRole")).Succeeded)
+        {
+            <a asp-controller="Company" asp-action="Create" class="btn btn-primary">Create New</a>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.Name)</th>
+                            <th>@Html.DisplayNameFor(model => model.Website)</th>
+                            <th>@Html.DisplayNameFor(model => model.ContactEmail)</th>
+                            <th>@Html.DisplayNameFor(model => model.ContactPhone)</th>
+                            <th>@Html.DisplayNameFor(model => model.Jobs)</th>
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "RequireAdminOrManagerRole")).Succeeded)
+                            {
+                                <th>Actions</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                                <td>@Html.DisplayFor(modelItem => item.Website)</td>
+                                <td>@Html.DisplayFor(modelItem => item.ContactEmail)</td>
+                                <td>@Html.DisplayFor(modelItem => item.ContactPhone)</td>
+                                <td>@(item.Jobs != null ? item.Jobs.Count.ToString() : "No jobs listed")</td>
+                                @if ((await AuthorizationService.AuthorizeAsync(User, "RequireAdminOrManagerRole")).Succeeded)
+                                {
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">Edit</a>
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info btn-sm">Details</a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm">Delete</a>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

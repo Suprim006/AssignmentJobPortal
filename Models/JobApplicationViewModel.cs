@@ -3,13 +3,11 @@
     public class JobApplicationViewModel
     {
         public int Id { get; set; }
-        public int JobId { get; set; }
-        public string JobTitle { get; set; } // Job relation
+        public DateTime ApplicationDate { get; set; }
         public int UserId { get; set; }
-        public string ApplicantName { get; set; } // User relation
-        public string ApplicantEmail { get; set; }
-        public DateTime AppliedDate { get; set; }
-        public string Status { get; set; } // Pending, Approved, Rejected, etc.
+        public string? UserName { get; set; } // for displaying User name
+        public int JobId { get; set; }
+        public string? JobTitle { get; set; } // for displaying Job title
+        public string? CoverLetter { get; set; }
     }
-
 }

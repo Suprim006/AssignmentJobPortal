@@ -8,8 +8,9 @@
         public int Salary { get; set; }
         public DateTime PostedDate { get; set; }
         public DateTime ClosingDate { get; set; }
-        public string CompanyName { get; set; } // Company relation
-        public string CategoryName { get; set; } // Category relation
+        public string? CompanyName { get; set; }
+        public string? CompanyAddress { get; set; } // Added CompanyAddress
+        public string? CategoryName { get; set; }
+        public int CategoryId { get; set; } // Added CategoryId for filtering
     }
-
 }

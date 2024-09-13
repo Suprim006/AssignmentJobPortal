@@ -6,13 +6,12 @@ namespace AssignmentJobPortal
 {
     public class AppDbContext : DbContext
     {
-        public DbSet<Job> Jobs { get; set; }
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<Company> Companies { get; set; }
-        public DbSet<JobApplication> JobApplications { get; set; }
-        public DbSet<Role> Roles { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<Jobs> Jobs { get; set; }
+        public DbSet<Categories> Categories { get; set; }
+        public DbSet<Companies> Companies { get; set; }
+        public DbSet<JobApplications> JobApplications { get; set; }
+        public DbSet<Roles> Roles { get; set; }
+        public DbSet<Users> Users { get; set; }
 
         public string DbPath { get; } // Path to the SQLite DB file
 
@@ -26,7 +25,5 @@ namespace AssignmentJobPortal
         {
             optionsBuilder.UseSqlite($"Data Source={DbPath}");
         }
-        public DbSet<AssignmentJobPortal.Models.UserViewModel> UserViewModel { get; set; } = default!;
-        public DbSet<AssignmentJobPortal.Models.JobViewModel> JobViewModel { get; set; } = default!;
     }
 }

@@ -1,15 +1,21 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AssignmentJobPortal.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AssignmentJobPortal.Controllers
 {
     public class CompanyController : Controller
     {
         AppDbContext _dbContext = new AppDbContext();
-        // GET: CompanyController
+        // GET: Company
         public ActionResult Index()
         {
-            return View();
+            var companies = _dbContext.Companies
+                .Include(c => c.Jobs) // Eagerly load the related Jobs
+                .ToList();
+            return View(companies);
         }
 
         // GET: CompanyController/Details/5
@@ -19,66 +25,94 @@ namespace AssignmentJobPortal.Controllers
         }
 
         // GET: CompanyController/Create
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: CompanyController/Create
+        // POST: Company/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
+        public ActionResult Create(Companies company)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                _dbContext.Companies.Add(company);
+                _dbContext.SaveChanges();
+                return RedirectToAction("Index");
             }
-            catch
-            {
-                return View();
-            }
+            ViewBag.Error = "Unable to create new company";
+            return View(company);
         }
 
-        // GET: CompanyController/Edit/5
+
+        // GET: Company/Edit/5
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
         public ActionResult Edit(int id)
         {
-            return View();
+            var company = _dbContext.Companies.Find(id);
+            if (company == null)
+            {
+                return NotFound();
+            }
+
+            return View(company);
         }
 
-        // POST: CompanyController/Edit/5
+
+        // POST: Company/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
+        public ActionResult Edit(int id, Companies company)
         {
-            try
+            if (id != company.Id)
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
+
+            if (ModelState.IsValid)
             {
-                return View();
+                _dbContext.Companies.Update(company);
+                _dbContext.SaveChanges();
+                return RedirectToAction("Index");
             }
+
+            return View(company);
         }
 
-        // GET: CompanyController/Delete/5
+
+        // GET: Company/Delete/5
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
         public ActionResult Delete(int id)
         {
-            return View();
+            var company = _dbContext.Companies.Find(id);
+            if (company == null)
+            {
+                return NotFound();
+            }
+
+            return View(company);
         }
 
-        // POST: CompanyController/Delete/5
-        [HttpPost]
+
+        // POST: Company/Delete/5
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        [Authorize(Policy = "RequireAdminOrManagerRole")]
+        public ActionResult DeleteConfirmed(int id)
         {
-            try
+            var company = _dbContext.Companies.Find(id);
+            if (company != null)
             {
-                return RedirectToAction(nameof(Index));
+                _dbContext.Companies.Remove(company);
+                _dbContext.SaveChanges();
             }
-            catch
-            {
-                return View();
-            }
+
+            return RedirectToAction("Index");
         }
+
     }
 }

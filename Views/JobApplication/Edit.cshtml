@@ -1,0 +1,43 @@
+﻿@model AssignmentJobPortal.Models.JobApplicationViewModel
+
+@{
+    ViewBag.Title = "Edit Job Application";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<form asp-action="Edit" method="post">
+    <div class="form-group">
+        <label asp-for="ApplicationDate" class="control-label"></label>
+        <input asp-for="ApplicationDate" class="form-control" />
+        <span asp-validation-for="ApplicationDate" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="UserId" class="control-label"></label>
+        <select asp-for="UserId" class="form-control" asp-items="ViewBag.Users"></select>
+        <span asp-validation-for="UserId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="JobId" class="control-label"></label>
+        <select asp-for="JobId" class="form-control" asp-items="ViewBag.Jobs"></select>
+        <span asp-validation-for="JobId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="CoverLetter" class="control-label"></label>
+        <textarea asp-for="CoverLetter" class="form-control"></textarea>
+        <span asp-validation-for="CoverLetter" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
+</form>
+
+<a asp-action="Index">Back to List</a>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

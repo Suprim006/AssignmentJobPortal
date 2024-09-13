@@ -1,4 +1,5 @@
-﻿using AssignmentJobPortal.Models;
+﻿using AssignmentJobPortal.Entities;
+using AssignmentJobPortal.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,99 +13,273 @@ namespace AssignmentJobPortal.Controllers
         AppDbContext _dbContext = new AppDbContext();
 
         // GET: JobController
-        public ActionResult Index()
+        public ActionResult Index(int? categoryId, string location, int? postedWithin, string sort)
         {
-            var job_list = _dbContext.Jobs
-                .Include(j => j.Company) // Eager load the Company
-                .Include(j => j.Category) // Eager load the Category
-                .Select(j => new JobViewModel()
-                {
-                    Id = j.Id,
-                    Title = j.Title,
-                    Description = j.Description,
-                    PostedDate = j.PostedDate,
-                    ClosingDate = j.ClosingDate,
-                    CompanyName = j.Company.Name, // Access the Company name
-                    CategoryName = j.Category.Name // Access the Category name
-                }).ToList();
-            Console.WriteLine("Listing job_list");
-            Console.WriteLine(job_list.Count);
-            if (job_list.Count > 0)
+            var query = _dbContext.Jobs
+                .Include(j => j.Company)
+                .Include(j => j.Category)
+                .AsQueryable();
+
+            // Apply filters
+            if (categoryId.HasValue)
             {
-                Console.WriteLine(job_list.Count.ToString());
-                return View(job_list);
+                query = query.Where(j => j.Category.Id == categoryId.Value);
             }
 
-            return View(Enumerable.Empty<JobViewModel>());
+            if (!string.IsNullOrEmpty(location))
+            {
+                query = query.Where(j => j.Company.Address.Contains(location));
+            }
+
+            if (postedWithin.HasValue)
+            {
+                var cutoffDate = DateTime.Now.AddDays(-postedWithin.Value);
+                query = query.Where(j => j.PostedDate >= cutoffDate);
+            }
+
+            // Apply sorting
+            switch (sort)
+            {
+                case "date":
+                    query = query.OrderByDescending(j => j.PostedDate);
+                    break;
+                case "salary":
+                    query = query.OrderByDescending(j => j.Salary);
+                    break;
+                default:
+                    query = query.OrderByDescending(j => j.PostedDate);
+                    break;
+            }
+
+            var job_list = query.Select(j => new JobViewModel()
+            {
+                Id = j.Id,
+                Title = j.Title,
+                Description = j.Description,
+                Salary = j.Salary,
+                PostedDate = j.PostedDate,
+                ClosingDate = j.ClosingDate,
+                CompanyName = j.Company.Name,
+                CompanyAddress = j.Company.Address,
+                CategoryName = j.Category.Name,
+                CategoryId = j.Category.Id
+            }).ToList();
+
+            // Populate ViewBag with data for dropdowns
+            ViewBag.Categories = _dbContext.Categories
+                .Select(c => new CategoryViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description
+                })
+                .ToList();
+
+            ViewBag.Locations = _dbContext.Companies
+                .Select(c => c.Address)
+                .Distinct()
+                .ToList();
+
+            ViewBag.Companies = _dbContext.Companies
+                .Select(c => new CompanyViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Address = c.Address,
+                    Website = c.Website,
+                    ContactEmail = c.ContactEmail,
+                    ContactPhone = c.ContactPhone,
+                    JobCount = c.Jobs.Count()
+                })
+                .ToList();
+
+            return View(job_list);
         }
 
         // GET: JobController/Details/5
         public ActionResult Details(int id)
         {
-            return View();
+            var job_detail = _dbContext.Jobs
+                .Include(j => j.Company)
+                .Include(j => j.Category)
+                .Where(j => j.Id == id)
+                .Select(j => new JobViewModel()
+                {
+                    Id = j.Id,
+                    Title = j.Title,
+                    Description = j.Description,
+                    Salary = j.Salary,
+                    PostedDate = j.PostedDate,
+                    ClosingDate = j.ClosingDate,
+                    CompanyName = j.Company.Name,
+                    CompanyAddress = j.Company.Address,
+                    CategoryName = j.Category.Name,
+                })
+                .FirstOrDefault();
+
+            if (job_detail == null)
+            {
+                return NotFound();
+            }
+
+            return View(job_detail);
         }
 
         // GET: JobController/Create
         public ActionResult Create()
         {
+            ViewBag.Companies = _dbContext.Companies.ToList();
+            ViewBag.Categories = _dbContext.Categories.ToList();
+
             return View();
         }
 
         // POST: JobController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Jobs model)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var job = new Jobs
+                {
+                    Title = model.Title,
+                    Description = model.Description,
+                    Salary = model.Salary,
+                    PostedDate = model.PostedDate,
+                    ClosingDate = model.ClosingDate,
+                    CompanyId = model.CompanyId,
+                    CategoryId = model.CategoryId
+                };
+
+                _dbContext.Jobs.Add(job);
+                _dbContext.SaveChanges();
+
+                return RedirectToAction("Index");
             }
-            catch
-            {
-                return View();
-            }
+
+            // If we got here, something went wrong; redisplay the form
+            ViewBag.Companies = _dbContext.Companies.ToList();
+            ViewBag.Categories = _dbContext.Categories.ToList();
+            return View(model);
         }
 
+
         // GET: JobController/Edit/5
+        [HttpGet]
         public ActionResult Edit(int id)
         {
-            return View();
+            var job = _dbContext.Jobs
+                .Include(j => j.Company) // Eager load the Company
+                .Include(j => j.Category) // Eager load the Category
+                .Where(j => j.Id == id)
+                .Select(j => new Jobs
+                {
+                    Id = j.Id,
+                    Title = j.Title,
+                    Description = j.Description,
+                    Salary = j.Salary,
+                    PostedDate = j.PostedDate,
+                    ClosingDate = j.ClosingDate,
+                    CompanyId = j.CompanyId, // Optional: If you need it in the view
+                    CategoryId= j.CategoryId // Optional: If you need it in the view
+                })
+                .FirstOrDefault();
+
+            if (job == null)
+            {
+                return NotFound();
+            }
+
+            // Prepare data for dropdowns
+            ViewBag.Companies = _dbContext.Companies.ToList();
+            ViewBag.Categories = _dbContext.Categories.ToList();
+
+            return View(job);
         }
+
 
         // POST: JobController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(Jobs model)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var job = _dbContext.Jobs.Find(model.Id);
+
+                if (job != null)
+                {
+                    job.Title = model.Title;
+                    job.Description = model.Description;
+                    job.Salary = model.Salary;
+                    job.PostedDate = model.PostedDate;
+                    job.ClosingDate = model.ClosingDate;
+                    job.CompanyId = model.CompanyId;
+                    job.CategoryId = model.CategoryId;
+
+                    _dbContext.Jobs.Update(job);
+                    _dbContext.SaveChanges();
+
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    return NotFound();
+                }
             }
-            catch
-            {
-                return View();
-            }
+
+            // If we got here, something went wrong; redisplay the form
+            ViewBag.Companies = _dbContext.Companies.ToList();
+            ViewBag.Categories = _dbContext.Categories.ToList();
+            return View(model);
         }
 
+
         // GET: JobController/Delete/5
+        [HttpGet]
         public ActionResult Delete(int id)
         {
-            return View();
+            var job = _dbContext.Jobs
+                .Include(j => j.Company) // Eager load the Company
+                .Include(j => j.Category) // Eager load the Category
+                .Where(j => j.Id == id)
+                .Select(j => new JobViewModel
+                {
+                    Id = j.Id,
+                    Title = j.Title,
+                    Description = j.Description,
+                    Salary = j.Salary,
+                    PostedDate = j.PostedDate,
+                    ClosingDate = j.ClosingDate,
+                    CompanyName = j.Company.Name, // Optional: If you need it in the view
+                    CategoryName = j.Category.Name // Optional: If you need it in the view
+                })
+                .FirstOrDefault();
+
+            if (job == null)
+            {
+                return NotFound();
+            }
+
+            return View(job);
         }
 
         // POST: JobController/Delete/5
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult DeleteConfirmed(int id)
         {
-            try
+            var job = _dbContext.Jobs.Find(id);
+
+            if (job != null)
             {
-                return RedirectToAction(nameof(Index));
+                _dbContext.Jobs.Remove(job);
+                _dbContext.SaveChanges();
             }
-            catch
-            {
-                return View();
-            }
+
+            return RedirectToAction("Index");
         }
+
     }
 }

@@ -17,7 +17,7 @@ namespace AssignmentJobPortal.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.Category", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Categories", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -36,7 +36,7 @@ namespace AssignmentJobPortal.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.Company", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Companies", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -67,42 +67,7 @@ namespace AssignmentJobPortal.Migrations
                     b.ToTable("Companies");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.Job", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("ClosingDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("PostedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("CompanyId");
-
-                    b.ToTable("Jobs");
-                });
-
-            modelBuilder.Entity("AssignmentJobPortal.Entities.JobApplication", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.JobApplications", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -130,7 +95,45 @@ namespace AssignmentJobPortal.Migrations
                     b.ToTable("JobApplications");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.Role", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Jobs", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("ClosingDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("PostedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Salary")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("Jobs");
+                });
+
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Roles", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -145,7 +148,7 @@ namespace AssignmentJobPortal.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.User", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Users", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -174,60 +177,25 @@ namespace AssignmentJobPortal.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("AssignmentJobPortal.Entities.UserRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("RoleId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RoleId");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserRoles");
+                    b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.Job", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.JobApplications", b =>
                 {
-                    b.HasOne("AssignmentJobPortal.Entities.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AssignmentJobPortal.Entities.Company", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Company");
-                });
-
-            modelBuilder.Entity("AssignmentJobPortal.Entities.JobApplication", b =>
-                {
-                    b.HasOne("AssignmentJobPortal.Entities.Job", "Job")
+                    b.HasOne("AssignmentJobPortal.Entities.Jobs", "Job")
                         .WithMany("JobApplications")
                         .HasForeignKey("JobId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AssignmentJobPortal.Entities.User", "User")
+                    b.HasOne("AssignmentJobPortal.Entities.Users", "User")
                         .WithMany("JobApplications")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -238,40 +206,49 @@ namespace AssignmentJobPortal.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.UserRole", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Jobs", b =>
                 {
-                    b.HasOne("AssignmentJobPortal.Entities.Role", "Role")
-                        .WithMany("UserRoles")
+                    b.HasOne("AssignmentJobPortal.Entities.Categories", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AssignmentJobPortal.Entities.Companies", "Company")
+                        .WithMany("Jobs")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Users", b =>
+                {
+                    b.HasOne("AssignmentJobPortal.Entities.Roles", "Role")
+                        .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AssignmentJobPortal.Entities.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Role");
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.Job", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Companies", b =>
+                {
+                    b.Navigation("Jobs");
+                });
+
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Jobs", b =>
                 {
                     b.Navigation("JobApplications");
                 });
 
-            modelBuilder.Entity("AssignmentJobPortal.Entities.Role", b =>
-                {
-                    b.Navigation("UserRoles");
-                });
-
-            modelBuilder.Entity("AssignmentJobPortal.Entities.User", b =>
+            modelBuilder.Entity("AssignmentJobPortal.Entities.Users", b =>
                 {
                     b.Navigation("JobApplications");
-
-                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

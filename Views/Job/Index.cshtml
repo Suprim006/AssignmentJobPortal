@@ -1,71 +1,171 @@
 ﻿@model IEnumerable<AssignmentJobPortal.Models.JobViewModel>
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@inject IAuthorizationService AuthorizationService
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Job Listings";
 }
 
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Salary)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PostedDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ClosingDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CompanyName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CategoryName)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Salary)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PostedDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ClosingDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CompanyName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CategoryName)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@if ((await AuthorizationService.AuthorizeAsync(User, "RequireAdminOrManagerRole")).Succeeded)
+{
+    <p>
+        <a class="btn btn-outline-primary" asp-action="Create">Create New</a>
+    </p>
 }
-    </tbody>
-</table>
+
+<!-- Job List Area Start -->
+<div class="job-listing-area pt-120 pb-120">
+    <div class="container">
+        <div class="row">
+            <!-- Left content -->
+            <div class="col-xl-3 col-lg-3 col-md-4">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="small-section-tittle2 mb-45">
+                            <h4>Filter Jobs</h4>
+                        </div>
+                    </div>
+                </div>
+                <!-- Job Category Listing start -->
+                <div class="job-category-listing mb-50">
+                    <!-- Job Category -->
+                    <div class="single-listing">
+                        <div class="small-section-tittle2">
+                            <h4>Job Category</h4>
+                        </div>
+                        <div class="select-job-items2">
+                            <select name="category" id="category">
+                                <option value="">All Category</option>
+                                @foreach (var category in ViewBag.Categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Job Location -->
+                    <div class="single-listing">
+                        <div class="small-section-tittle2">
+                            <h4>Job Location</h4>
+                        </div>
+                        <div class="select-job-items2">
+                            <select name="location" id="location">
+                                <option value="">Anywhere</option>
+                                @foreach (var location in ViewBag.Locations)
+                                {
+                                    <option value="@location">@location</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Posted Within -->
+                    <div class="single-listing">
+                        <div class="select-Categories pb-50">
+                            <div class="small-section-tittle2">
+                                <h4>Posted Within</h4>
+                            </div>
+                            <label class="container">
+                                Any
+                                <input type="checkbox" checked="checked" name="posted_within" value="">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="container">
+                                Today
+                                <input type="checkbox" name="posted_within" value="1">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="container">
+                                Last 2 days
+                                <input type="checkbox" name="posted_within" value="2">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="container">
+                                Last 3 days
+                                <input type="checkbox" name="posted_within" value="3">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="container">
+                                Last 5 days
+                                <input type="checkbox" name="posted_within" value="5">
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="container">
+                                Last 10 days
+                                <input type="checkbox" name="posted_within" value="10">
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <!-- Job Category Listing End -->
+            </div>
+            <!-- Right content -->
+            <div class="col-xl-9 col-lg-9 col-md-8">
+                <!-- Featured_job_start -->
+                <section class="featured-job-area">
+                    <div class="container">
+                        <!-- Count of Job list Start -->
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="count-job mb-35">
+                                    <span>@Model.Count() Jobs found</span>
+                                    <!-- Select job items start -->
+                                    <div class="select-job-items">
+                                        <span>Sort by</span>
+                                        <select name="sort">
+                                            <option value="">None</option>
+                                            <option value="date">Date</option>
+                                            <option value="salary">Salary</option>
+                                        </select>
+                                    </div>
+                                    <!--  Select job items End-->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Count of Job list End -->
+                        <!-- Job listings -->
+                        @foreach (var item in Model)
+                        {
+                            <div class="single-job-items mb-30">
+                                <div class="job-items">
+                                    <div class="job-tittle job-tittle2">
+                                        <a asp-action="Details" asp-route-id="@item.Id">
+                                            <h4>@item.Title</h4>
+                                        </a>
+                                        <ul>
+                                            <li>@item.CompanyName</li>
+                                            <li><i class="fas fa-map-marker-alt"></i>@item.CompanyAddress</li>
+                                            <li>$@item.Salary</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="items-link items-link2 f-right">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "RequireAdminOrManagerRole")).Succeeded)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary">Edit</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</a>
+                                    }
+                                    else
+                                    {
+                                        <a >Learn More</a>
+                                    }
+                                    <span>@((DateTime.Now - item.PostedDate).Days) days ago</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </section>
+                <!-- Featured_job_end -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Job List Area End -->
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Add your JavaScript for filtering and sorting here
+        });
+    </script>
+}

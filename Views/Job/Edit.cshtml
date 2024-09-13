@@ -1,0 +1,88 @@
+﻿@model AssignmentJobPortal.Entities.Jobs
+@{
+    ViewData["Title"] = "Edit Job";
+}
+
+<div class="container mt-5">
+    <h1 class="mb-4">Edit Job</h1>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <input type="hidden" asp-for="Id" />
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Title" class="form-label">Job Title</label>
+                        <input asp-for="Title" class="form-control" placeholder="Enter job title">
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Salary" class="form-label">Salary</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Salary" class="form-control" placeholder="Enter salary">
+                        </div>
+                        <span asp-validation-for="Salary" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">Job Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter job description"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PostedDate" class="form-label">Posted Date</label>
+                        <input asp-for="PostedDate" class="form-control" type="date">
+                        <span asp-validation-for="PostedDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ClosingDate" class="form-label">Closing Date</label>
+                        <input asp-for="ClosingDate" class="form-control" type="date">
+                        <span asp-validation-for="ClosingDate" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CompanyId" class="form-label">Company</label>
+                        <select asp-for="CompanyId" asp-items="@(new SelectList(ViewBag.Companies, "Id", "Name"))" class="form-select">
+                            <option value="">-- Select Company --</option>
+                        </select>
+                        <span asp-validation-for="CompanyId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CategoryId" class="form-label">Category</label>
+                        <select asp-for="CategoryId" asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))" class="form-select">
+                            <option value="">-- Select Category --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-action="Index" class="btn btn-secondary me-md-2">Back to List</a>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(function () {
+            // Ensure closing date is after posted date
+            $('#PostedDate, #ClosingDate').change(function () {
+                var postedDate = new Date($('#PostedDate').val());
+                var closingDate = new Date($('#ClosingDate').val());
+
+                if (closingDate <= postedDate) {
+                    alert("Closing date must be after the posted date.");
+                    $('#ClosingDate').val($('#PostedDate').val());
+                }
+            });
+        });
+    </script>
+}

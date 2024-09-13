@@ -30,40 +30,52 @@ namespace AssignmentJobPortal.Controllers
         // GET: UserController/Create
         public ActionResult Register()
         {
+            var roles = _dbContext.Roles.ToList();
+            ViewBag.Roles = roles;
+
+            Console.WriteLine($"Number of roles retrieved: {roles.Count}");
+            foreach (var role in roles)
+            {
+                Console.WriteLine($"Role ID: {role.Id}, Name: {role.Name}");
+            }
+
             return View();
         }
 
-        // POST: UserController/Create
+        // POST: User/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Register(User uvm)
+        [HttpPost]
+        public async Task<IActionResult> Register(UserViewModel model)
         {
-            try
+            if (ModelState.IsValid)
             {
-                ViewBag.Error = string.Empty;
-                if (_dbContext.Users.Where(u => u.Email == uvm.Email).Any())
+                // Check if the email or phone number already exists
+                if (_dbContext.Users.Any(u => u.Email == model.Email || u.PhoneNumber == model.PhoneNumber))
                 {
-                    ViewBag.Error = "User with this email already exists";
-                    return View();
+                    ModelState.AddModelError(string.Empty, "Email or Phone Number is already in use.");
+                    ViewBag.Roles = await _dbContext.Roles.ToListAsync();
+                    return View(model);
                 }
-                var _usr = new User()
+
+                var user = new Users
                 {
-                    FirstName = uvm.FirstName,
-                    LastName = uvm.LastName,
-                    Email = uvm.Email,
-                    PhoneNumber = uvm.PhoneNumber,
-                    Password = uvm.Password,
-                    DateOfBirth = uvm.DateOfBirth
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    Password = model.Password, // Consider hashing the password before storing it
+                    PhoneNumber = model.PhoneNumber,
+                    DateOfBirth = model.DateOfBirth,
+                    RoleId = model.RoleId
                 };
 
-                _dbContext.Users.Add(_usr);
-                _dbContext.SaveChanges();
-                return RedirectToAction(nameof(Login));
+                _dbContext.Users.Add(user);
+                await _dbContext.SaveChangesAsync();
+                return RedirectToAction("Index", "Home");
             }
-            catch
-            {
-                return View();
-            }
+            ViewBag.Error = "Unable to create your user.";
+            ViewBag.Roles = await _dbContext.Roles.ToListAsync();
+            return View(model);
         }
         // GET: UserController/Login
         public ActionResult Login()
@@ -73,65 +85,101 @@ namespace AssignmentJobPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Login(User uvm)
+        public ActionResult Login(Users uvm)
         {
             try
             {
+                // Fetch user by email
                 var user = _dbContext.Users
                     .Where(u => u.Email == uvm.Email)
                     .FirstOrDefault();
 
+                // Validate the user and password
                 if (user != null && user.Password == uvm.Password)
                 {
+                    // Create claims including the role
                     var claims = new List<Claim>
                     {
-                        new Claim(ClaimTypes.Name,user.Email),
-                        new Claim(ClaimTypes.NameIdentifier,user.Id.ToString())
+                        new Claim(ClaimTypes.Name, user.Email),
+                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new Claim("RoleId", user.RoleId.ToString()) // Add role as claim
                     };
-                    var claimsIdntity = new ClaimsIdentity(claims,
-                            CookieAuthenticationDefaults.AuthenticationScheme);
 
-                    var authProperties = new AuthenticationProperties();
+                    // Create identity using the claims
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
+                    // Define authentication properties (optional)
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true, // Persistent cookie
+                        ExpiresUtc = DateTime.UtcNow.AddMinutes(30) // Expiration time
+                    };
+
+                    // Sign in the user
                     HttpContext.SignInAsync(
                         CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(claimsIdntity),
-                            authProperties
-                        );
+                        new ClaimsPrincipal(claimsIdentity),
+                        authProperties
+                    );
+
+                    // Redirect to the home page after successful login
                     return RedirectToAction("Index", "Home");
                 }
                 else
                 {
-                    ViewBag.Error = "Unable to login";
+                    // If login fails, show error message
+                    ViewBag.Error = "Unable to login. Please check your credentials.";
                     return View();
                 }
             }
             catch
             {
+                // Return an internal server error status code in case of an exception
                 return StatusCode(500, new { message = "Internal server error" });
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            // Sign out the user
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // Redirect to the home page or login page after logout
+            return RedirectToAction("Index", "Home");
         }
 
 
         // GET: UserController/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+                var user = _dbContext.Users.Find(id);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                return View(user);
         }
 
         // POST: UserController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, Users user)
         {
-            try
+            if (id != user.Id)
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
+
+            if (ModelState.IsValid)
             {
-                return View();
+                _dbContext.Users.Update(user);
+                _dbContext.SaveChanges();
+                return RedirectToAction("Index");
             }
+
+            return View(user);
         }
 
         // GET: UserController/Delete/5

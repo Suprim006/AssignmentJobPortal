@@ -5,6 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+var folder = Environment.SpecialFolder.LocalApplicationData;
+Console.WriteLine("File path: ");
+Console.WriteLine(Environment.GetFolderPath(folder));
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -18,10 +23,18 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "auth";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.LoginPath = "/User/Login";
-        options.AccessDeniedPath = "/Home/Error";
+        options.AccessDeniedPath = "/Home/AccessDenied"; // Custom path for unauthorized access
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminOrManagerRole", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c => c.Type == "RoleId" &&
+                                      (c.Value == "1" || c.Value == "2"))));
+});
+
+
 
 var app = builder.Build();
 
@@ -48,3 +61,5 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 app.Run();
+
+
